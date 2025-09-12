@@ -4,7 +4,6 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-from streamlit_autorefresh import st_autorefresh
 
 # -------------------- PAGE CONFIG --------------------
 st.set_page_config(page_title="BHOOMI Rockfall AI", page_icon="🤖", layout="wide")
@@ -20,7 +19,7 @@ st.markdown("""
 
 st.title("🤖 BHOOMI Safety Interface")
 st.markdown("### AI-Powered Rockfall Prediction & Alert System")
-st.markdown("System Status: 🔵 Online | Mode: Multimodal Fusion Active")
+st.markdown("*System Status:* 🔵 Online | *Mode:* Multimodal Fusion Active")
 st.divider()
 
 # -------------------- DATA SOURCE --------------------
@@ -116,6 +115,7 @@ with col_b:
 # -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
 
+# Simulated heatmap data
 heat_data = np.random.rand(20, 20) * current_risk
 x, y = np.meshgrid(np.arange(20), np.arange(20))
 
@@ -128,6 +128,7 @@ heat_fig = px.imshow(
     title="Thermal Activity Heatmap"
 )
 
+# Add sensor hotspots (random 6 points)
 sensor_x = np.random.randint(0, 20, 6)
 sensor_y = np.random.randint(0, 20, 6)
 heat_fig.add_trace(go.Scatter(
@@ -144,81 +145,6 @@ heat_fig.update_layout(
     plot_bgcolor="#0d1117",
     paper_bgcolor="#0d1117"
 )
-
-# -------------------- WORKER TRACKING --------------------
-st.subheader("👷 Worker Location Tracking")
-
-if "workers" not in st.session_state:
-    st.session_state.workers = pd.DataFrame({
-        "WorkerID": ["W1", "W2", "W3", "W4"],
-        "X": np.random.randint(0, 20, 4),
-        "Y": np.random.randint(0, 20, 4)
-    })
-else:
-    st.session_state.workers["X"] = (st.session_state.workers["X"] + np.random.randint(-1,2,4)).clip(0,19)
-    st.session_state.workers["Y"] = (st.session_state.workers["Y"] + np.random.randint(-1,2,4)).clip(0,19)
-
-workers = st.session_state.workers
-
-danger_threshold = current_risk * 0.7
-danger_zones = np.argwhere(heat_data > danger_threshold)
-
-def check_danger(x, y):
-    return any((x == dz[1] and y == dz[0]) for dz in danger_zones)
-
-workers["InDanger"] = workers.apply(lambda w: check_danger(w["X"], w["Y"]), axis=1)
-
-for _, w in workers.iterrows():
-    if w["InDanger"]:
-        st.error(f"🚨 Worker {w['WorkerID']} entered DANGER zone! (X={w['X']}, Y={w['Y']})")
-    else:
-        st.success(f"✅ Worker {w['WorkerID']} safe (X={w['X']}, Y={w['Y']})")
-
-heat_fig.add_trace(go.Scatter(
-    x=workers["X"], y=workers["Y"],
-    mode="markers+text",
-    marker=dict(size=15, color=np.where(workers["InDanger"], "red", "green"), symbol="circle"),
-    text=workers["WorkerID"], textposition="bottom center"
-))
-
-# -------------------- PERIMETER RISK INDICATORS --------------------
-st.subheader("🛑 Perimeter Risk Indicators")
-
-def risk_level(value):
-    if value > 70:
-        return "🔴 HIGH"
-    elif value > 40:
-        return "🟡 MEDIUM"
-    else:
-        return "🟢 LOW"
-
-perimeter_points = []
-for i in range(20):  
-    perimeter_points.append((0, i, heat_data[0, i]))       # top row
-    perimeter_points.append((19, i, heat_data[19, i]))     # bottom row
-    perimeter_points.append((i, 0, heat_data[i, 0]))       # left col
-    perimeter_points.append((i, 19, heat_data[i, 19]))     # right col
-
-perimeter_df = pd.DataFrame(perimeter_points, columns=["X", "Y", "Value"])
-perimeter_df["RiskLevel"] = perimeter_df["Value"].apply(risk_level)
-
-for _, row in perimeter_df.iterrows():
-    st.write(f"Cell ({row['X']}, {row['Y']}) → {row['RiskLevel']}")
-
-heat_fig.add_trace(go.Scatter(
-    x=perimeter_df["Y"], 
-    y=perimeter_df["X"],
-    mode="markers+text",
-    marker=dict(
-        size=10,
-        color=np.where(perimeter_df["RiskLevel"] == "🔴 HIGH", "red",
-                       np.where(perimeter_df["RiskLevel"] == "🟡 MEDIUM", "yellow", "green")),
-        symbol="diamond"
-    ),
-    text=perimeter_df["RiskLevel"],
-    textposition="top center"
-))
-
 st.plotly_chart(heat_fig, use_container_width=True)
 
 # -------------------- ALERTS LOG --------------------
@@ -246,8 +172,8 @@ fig_forecast.update_layout(template="plotly_dark",
 st.plotly_chart(fig_forecast, use_container_width=True)
 
 # -------------------- AUTO REFRESH --------------------
-st_autorefresh(interval=60 * 1000, key="auto_refresh")
+st.experimental_autorefresh(interval=60 * 1000, key="auto_refresh")
 
 # -------------------- FOOTER --------------------
 st.markdown("---")
-st.markdown("🧠 BHOOMI Safety Core v3.1 | Live + CSV + Alerts + Forecast + Heatmap + Worker Tracking + Perimeter Indicators | TEAM BHOOMI ⚡")
+st.markdown("🧠 *BHOOMI Safety Core v3.1* | Live + CSV + Alerts + Forecast + Heatmap | TEAM BHOOMI ⚡")
