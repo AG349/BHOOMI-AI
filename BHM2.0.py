@@ -207,22 +207,6 @@ fig_workers.update_layout(
 
 st.plotly_chart(fig_workers, use_container_width=True)
 
-# -------------------- MANUAL ALERT --------------------
-st.subheader("📢 Trigger Manual Alert")
-if st.button("🚨 SEND ALERT NOW"):
-    st.success("✅ Alert sent to all registered numbers! (Simulated in demo mode)")
-
-# -------------------- FORECAST --------------------
-st.subheader("🔮 Forecast (Next 6 Hours)")
-hours = [f"{i}h" for i in range(1,7)]
-forecast = np.random.randint(20,95,size=6)
-df_forecast = pd.DataFrame({"Hour":hours,"Forecast Risk %":forecast})
-fig_forecast = px.bar(df_forecast, x="Hour", y="Forecast Risk %",
-                      color="Forecast Risk %", title="Predicted Risk Probability",
-                      color_continuous_scale="turbo")
-fig_forecast.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-st.plotly_chart(fig_forecast, use_container_width=True)
-
 # -------------------- RESTRICTED AREA ALERT WITH WORKER ALERT BUTTON --------------------
 st.subheader("🚫 Restricted Area Detection")
 restricted_areas = ["Zone A", "Zone C", "Zone E"]
@@ -248,6 +232,24 @@ if st.button("📢 Alert Workers Near Restricted Area"):
         st.success(f"✅ Alert sent to workers in restricted zones: {', '.join(restricted_alerts)}")
     else:
         st.info("ℹ No workers currently near restricted areas to alert.")
+
+# -------------------- MANUAL ALERT --------------------
+st.subheader("📢 Trigger Manual Alert")
+if st.button("🚨 SEND ALERT NOW"):
+    st.success("✅ Alert sent to all registered numbers! (Simulated in demo mode)")
+
+# -------------------- FORECAST --------------------
+st.subheader("🔮 Forecast (Next 6 Hours)")
+hours = [f"{i}h" for i in range(1,7)]
+forecast = np.random.randint(20,95,size=6)
+df_forecast = pd.DataFrame({"Hour":hours,"Forecast Risk %":forecast})
+fig_forecast = px.bar(df_forecast, x="Hour", y="Forecast Risk %",
+                      color="Forecast Risk %", title="Predicted Risk Probability",
+                      color_continuous_scale="turbo")
+fig_forecast.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+st.plotly_chart(fig_forecast, use_container_width=True)
+
+
 
 # -------------------- AUTO REFRESH --------------------
 st_autorefresh(interval=60*1000, key="auto_refresh")
