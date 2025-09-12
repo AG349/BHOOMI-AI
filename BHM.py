@@ -45,14 +45,13 @@ elif mode == "Upload CSV":
 
 else:
     if "df" not in st.session_state:
-        st.session_state.df = pd.DataFrame(columns=["Timestamp","Vibration","Slope","Weather","Risk","Temperature"])
+        st.session_state.df = pd.DataFrame(columns=["Timestamp","Vibration","Slope","Weather","Risk"])
     new_data = {
         "Timestamp": datetime.now().strftime("%H:%M:%S"),
         "Vibration": round(np.random.normal(0.5,0.2),3),
         "Slope": round(np.random.normal(45,3),2),
         "Weather": np.random.choice(["Sunny","Rainy","Cloudy","Windy"]),
-        "Risk": np.random.randint(0,100),
-        "Temperature": round(np.random.normal(30,5),2)  # NEW
+        "Risk": np.random.randint(0,100)
     }
     st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([new_data])], ignore_index=True)
     df = st.session_state.df.tail(50)
@@ -103,16 +102,6 @@ with col_a:
                             color_discrete_sequence=["orange"])
     fig_vibration.update_layout(template="plotly_dark",
                                 plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-    fig_vibration.add_annotation(
-        text="High", xref="paper", yref="paper",
-        x=0, y=1, showarrow=False,
-        font=dict(color="red", size=14, family="Arial Bold")
-    )
-    fig_vibration.add_annotation(
-        text="Low", xref="paper", yref="paper",
-        x=0, y=0, showarrow=False,
-        font=dict(color="green", size=14, family="Arial Bold")
-    )
     st.plotly_chart(fig_vibration, use_container_width=True)
 
 with col_b:
@@ -122,21 +111,10 @@ with col_b:
                         color_discrete_sequence=["lime"])
     fig_slope.update_layout(template="plotly_dark",
                             plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-    fig_slope.add_annotation(
-        text="High", xref="paper", yref="paper",
-        x=0, y=1, showarrow=False,
-        font=dict(color="red", size=14, family="Arial Bold")
-    )
-    fig_slope.add_annotation(
-        text="Low", xref="paper", yref="paper",
-        x=0, y=0, showarrow=False,
-        font=dict(color="green", size=14, family="Arial Bold")
-    )
     st.plotly_chart(fig_slope, use_container_width=True)
 
-
-# -------------------- THERMAL HEATMAP --------------------
-st.subheader("🌡 Thermal Heatmap with Sensor Hotspots & Risk Arrows")
+# -------------------- THERMAL HEATMAP (MERGED ENHANCEMENTS) --------------------
+st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
 
 heat_data = np.random.rand(20, 20) * current_risk
 x, y = np.meshgrid(np.arange(20), np.arange(20))
@@ -147,7 +125,18 @@ heat_fig = px.imshow(
     origin="lower",
     aspect="auto",
     labels=dict(color="Temperature / Risk Level"),
-    title="Thermal Activity Heatmap"
+    title="Thermal Activity Heatmap",
+    zmin=0,
+    zmax=100
+)
+
+# Add custom labels to colorbar
+heat_fig.update_coloraxes(
+    colorbar=dict(
+        title="Temperature / Risk Level",
+        tickvals=[0, 100],
+        ticktext=["Low", "High"]
+    )
 )
 
 sensor_x = np.random.randint(0, 20, 6)
@@ -160,22 +149,6 @@ heat_fig.add_trace(go.Scatter(
     text=[f"Sensor {i+1}" for i in range(6)],
     textposition="top center"
 ))
-
-max_idx = np.unravel_index(np.argmax(heat_data), heat_data.shape)
-min_idx = np.unravel_index(np.argmin(heat_data), heat_data.shape)
-
-heat_fig.add_annotation(
-    x=max_idx[1], y=max_idx[0],
-    ax=max_idx[1]-2, ay=max_idx[0]-2,
-    text="🔥 HIGH RISK",
-    showarrow=True, arrowhead=3, arrowsize=2, arrowcolor="red", font=dict(color="red")
-)
-heat_fig.add_annotation(
-    x=min_idx[1], y=min_idx[0],
-    ax=min_idx[1]+2, ay=min_idx[0]+2,
-    text="❄ LOW RISK",
-    showarrow=True, arrowhead=3, arrowsize=2, arrowcolor="cyan", font=dict(color="cyan")
-)
 
 heat_fig.update_layout(
     template="plotly_dark",
