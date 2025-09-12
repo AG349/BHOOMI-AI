@@ -223,6 +223,32 @@ fig_forecast = px.bar(df_forecast, x="Hour", y="Forecast Risk %",
 fig_forecast.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
 st.plotly_chart(fig_forecast, use_container_width=True)
 
+# -------------------- RESTRICTED AREA ALERT WITH WORKER ALERT BUTTON --------------------
+st.subheader("🚫 Restricted Area Detection")
+restricted_areas = ["Zone A", "Zone C", "Zone E"]
+worker_zones = np.random.choice(["Zone A","Zone B","Zone C","Zone D","Zone E"], size=5)
+restricted_alerts = [zone for zone in worker_zones if zone in restricted_areas]
+
+if restricted_alerts:
+    st.warning(f"⚠ Restricted Area Alert! Workers detected in: {', '.join(restricted_alerts)}")
+    alerts.loc[len(alerts)] = {
+        "Timestamp": datetime.now().strftime("%H:%M:%S"),
+        "Vibration": np.nan,
+        "Slope": np.nan,
+        "Weather": np.nan,
+        "Risk": 100,
+        "Action": "🚫 Restricted Area Entry"
+    }
+else:
+    st.info("✅ No workers in restricted areas.")
+
+# Button to alert workers near restricted zone
+if st.button("📢 Alert Workers Near Restricted Area"):
+    if restricted_alerts:
+        st.success(f"✅ Alert sent to workers in restricted zones: {', '.join(restricted_alerts)}")
+    else:
+        st.info("ℹ No workers currently near restricted areas to alert.")
+
 # -------------------- AUTO REFRESH --------------------
 st_autorefresh(interval=60*1000, key="auto_refresh")
 
