@@ -4,6 +4,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+from streamlit_autorefresh import st_autorefresh
 
 # -------------------- PAGE CONFIG --------------------
 st.set_page_config(page_title="BHOOMI Rockfall AI", page_icon="🤖", layout="wide")
@@ -19,7 +20,7 @@ st.markdown("""
 
 st.title("🤖 BHOOMI Safety Interface")
 st.markdown("### AI-Powered Rockfall Prediction & Alert System")
-st.markdown("*System Status:* 🔵 Online | *Mode:* Multimodal Fusion Active")
+st.markdown("System Status: 🔵 Online | Mode: Multimodal Fusion Active")
 st.divider()
 
 # -------------------- DATA SOURCE --------------------
@@ -115,7 +116,6 @@ with col_b:
 # -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
 
-# Simulated heatmap data
 heat_data = np.random.rand(20, 20) * current_risk
 x, y = np.meshgrid(np.arange(20), np.arange(20))
 
@@ -128,7 +128,6 @@ heat_fig = px.imshow(
     title="Thermal Activity Heatmap"
 )
 
-# Add sensor hotspots (random 6 points)
 sensor_x = np.random.randint(0, 20, 6)
 sensor_y = np.random.randint(0, 20, 6)
 heat_fig.add_trace(go.Scatter(
@@ -172,8 +171,8 @@ fig_forecast.update_layout(template="plotly_dark",
 st.plotly_chart(fig_forecast, use_container_width=True)
 
 # -------------------- AUTO REFRESH --------------------
-st.experimental_autorefresh(interval=60 * 1000, key="auto_refresh")
+st_autorefresh(interval=60 * 1000, key="auto_refresh")
 
 # -------------------- FOOTER --------------------
 st.markdown("---")
-st.markdown("🧠 *BHOOMI Safety Core v3.1* | Live + CSV + Alerts + Forecast + Heatmap | TEAM BHOOMI ⚡")
+st.markdown("🧠 BHOOMI Safety Core v3.1 | Live + CSV + Alerts + Forecast + Heatmap | TEAM BHOOMI ⚡")
