@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -20,7 +20,7 @@ st.markdown("""
 
 st.title("🤖 BHOOMI Safety Interface")
 st.markdown("### AI-Powered Rockfall Prediction & Alert System")
-st.markdown("*System Status:* 🔵 Online | *Mode:* Multimodal Fusion Active")
+st.markdown("System Status: 🔵 Online | Mode: Multimodal Fusion Active")
 st.divider()
 
 # -------------------- DATA SOURCE --------------------
@@ -92,7 +92,7 @@ gauge = go.Figure(go.Indicator(
 gauge.update_layout(paper_bgcolor="#0d1117", font={"color":"#00FFEF"})
 st.plotly_chart(gauge, use_container_width=True)
 
-# -------------------- VIBRATION + SLOPE --------------------
+# -------------------- VIBRATION + SLOPE WITH HIGH/LOW --------------------
 col_a, col_b = st.columns(2)
 
 with col_a:
@@ -102,6 +102,10 @@ with col_a:
                             color_discrete_sequence=["orange"])
     fig_vibration.update_layout(template="plotly_dark",
                                 plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+    fig_vibration.add_annotation(text="High", xref="paper", yref="paper", x=0, y=1,
+                                 showarrow=False, font=dict(color="red", size=14, family="Arial Bold"))
+    fig_vibration.add_annotation(text="Low", xref="paper", yref="paper", x=0, y=0,
+                                 showarrow=False, font=dict(color="green", size=14, family="Arial Bold"))
     st.plotly_chart(fig_vibration, use_container_width=True)
 
 with col_b:
@@ -111,39 +115,25 @@ with col_b:
                         color_discrete_sequence=["lime"])
     fig_slope.update_layout(template="plotly_dark",
                             plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+    fig_slope.add_annotation(text="High", xref="paper", yref="paper", x=0, y=1,
+                             showarrow=False, font=dict(color="red", size=14, family="Arial Bold"))
+    fig_slope.add_annotation(text="Low", xref="paper", yref="paper", x=0, y=0,
+                             showarrow=False, font=dict(color="green", size=14, family="Arial Bold"))
     st.plotly_chart(fig_slope, use_container_width=True)
 
 # -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
-
 heat_data = np.random.rand(20, 20) * current_risk
 x, y = np.meshgrid(np.arange(20), np.arange(20))
-
-heat_fig = px.imshow(
-    heat_data,
-    color_continuous_scale="plasma",
-    origin="lower",
-    aspect="auto",
-    labels=dict(color="Temperature / Risk Level"),
-    title="Thermal Activity Heatmap"
-)
-
+heat_fig = px.imshow(heat_data, color_continuous_scale="plasma", origin="lower", aspect="auto",
+                     labels=dict(color="Temperature / Risk Level"), title="Thermal Activity Heatmap", zmin=0, zmax=100)
+heat_fig.update_coloraxes(colorbar=dict(title="Temperature / Risk Level", tickvals=[0,100], ticktext=["Low","High"]))
 sensor_x = np.random.randint(0, 20, 6)
 sensor_y = np.random.randint(0, 20, 6)
-heat_fig.add_trace(go.Scatter(
-    x=sensor_x,
-    y=sensor_y,
-    mode="markers+text",
-    marker=dict(size=12, color="white", symbol="x"),
-    text=[f"Sensor {i+1}" for i in range(6)],
-    textposition="top center"
-))
-
-heat_fig.update_layout(
-    template="plotly_dark",
-    plot_bgcolor="#0d1117",
-    paper_bgcolor="#0d1117"
-)
+heat_fig.add_trace(go.Scatter(x=sensor_x, y=sensor_y, mode="markers+text",
+                              marker=dict(size=12, color="white", symbol="x"),
+                              text=[f"Sensor {i+1}" for i in range(6)], textposition="top center"))
+heat_fig.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
 st.plotly_chart(heat_fig, use_container_width=True)
 
 # -------------------- ALERTS LOG --------------------
@@ -153,34 +143,65 @@ alerts["Action"] = np.where(alerts["Risk"]>70,"🔴 Evacuation",
                      np.where(alerts["Risk"]>40,"🟡 Warning","🟢 Monitoring"))
 st.dataframe(alerts, use_container_width=True)
 
-# -------------------- RISK DISTRIBUTION BAR --------------------
-st.subheader("📊 Risk Distribution (High vs Low)")
-df["Risk_Level"] = np.where(df["Risk"] > 70, "High Risk",
-                     np.where(df["Risk"] > 40, "Medium Risk", "Low Risk"))
+# -------------------- RESTRICTED AREA ALERT --------------------
+st.subheader("🚫 Restricted Area Detection")
+restricted_areas = ["Zone A", "Zone C", "Zone E"]
+worker_zones = np.random.choice(["Zone A","Zone B","Zone C","Zone D","Zone E"], size=5)
+restricted_alerts = [zone for zone in worker_zones if zone in restricted_areas]
 
-risk_counts = df["Risk_Level"].value_counts().reset_index()
-risk_counts.columns = ["Risk_Level", "Count"]
+if restricted_alerts:
+    st.warning(f"⚠ Restricted Area Alert! Workers detected in: {', '.join(restricted_alerts)}")
+    alerts.loc[len(alerts)] = {
+        "Timestamp": datetime.now().strftime("%H:%M:%S"),
+        "Vibration": np.nan,
+        "Slope": np.nan,
+        "Weather": np.nan,
+        "Risk": 100,
+        "Action": "🚫 Restricted Area Entry"
+    }
+else:
+    st.info("✅ No workers in restricted areas.")
 
-fig_risk_bar = px.bar(
-    risk_counts,
-    x="Risk_Level",
-    y="Count",
-    color="Risk_Level",
-    title="Risk Level Distribution",
-    color_discrete_map={
-        "Low Risk": "green",
-        "Medium Risk": "yellow",
-        "High Risk": "red"
-    },
-    text="Count"
-)
+# -------------------- WORKER LOCATION TRACKING --------------------
+st.subheader("📍 Worker Location Tracking")
+mine_size = 20
+num_workers = 5
+worker_positions = pd.DataFrame({
+    "Worker": [f"Worker {i+1}" for i in range(num_workers)],
+    "X": np.random.randint(0, mine_size, num_workers),
+    "Y": np.random.randint(0, mine_size, num_workers)
+})
+restricted_coords = [(2,2),(5,5),(15,15)]
 
-fig_risk_bar.update_layout(
-    template="plotly_dark",
-    plot_bgcolor="#0d1117",
-    paper_bgcolor="#0d1117"
-)
-st.plotly_chart(fig_risk_bar, use_container_width=True)
+fig_workers = px.scatter(worker_positions, x="X", y="Y", text="Worker",
+                         color_discrete_sequence=["cyan"], title="Worker Locations in Mine")
+for coord in restricted_coords:
+    fig_workers.add_shape(type="rect", x0=coord[0]-0.5, y0=coord[1]-0.5, x1=coord[0]+0.5, y1=coord[1]+0.5,
+                          line=dict(color="red", width=2), fillcolor="rgba(255,0,0,0.2)")
+for i, row in worker_positions.iterrows():
+    if (row["X"], row["Y"]) in restricted_coords:
+        fig_workers.add_annotation(x=row["X"], y=row["Y"], text="🚫 Restricted",
+                                   showarrow=True, arrowhead=3, arrowcolor="red",
+                                   font=dict(color="red", size=12))
+fig_workers.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117",
+                          xaxis=dict(range=[0,mine_size]), yaxis=dict(range=[0,mine_size]), height=500)
+st.plotly_chart(fig_workers, use_container_width=True)
+
+# -------------------- REAL-TIME WORKER RESTRICTED AREA ALERT --------------------
+st.subheader("⚠ Worker Restricted Area Notification")
+for i, row in worker_positions.iterrows():
+    if (row["X"], row["Y"]) in restricted_coords:
+        st.error(f"🚨 {row['Worker']} is in a RESTRICTED AREA! Move to a safe zone immediately.")
+        alerts.loc[len(alerts)] = {
+            "Timestamp": datetime.now().strftime("%H:%M:%S"),
+            "Vibration": np.nan,
+            "Slope": np.nan,
+            "Weather": np.nan,
+            "Risk": 100,
+            "Action": f"🚫 {row['Worker']} entered Restricted Area"
+        }
+    else:
+        st.success(f"✅ {row['Worker']} is in a safe zone.")
 
 # -------------------- MANUAL ALERT --------------------
 st.subheader("📢 Trigger Manual Alert")
@@ -195,14 +216,12 @@ df_forecast = pd.DataFrame({"Hour":hours,"Forecast Risk %":forecast})
 fig_forecast = px.bar(df_forecast, x="Hour", y="Forecast Risk %",
                       color="Forecast Risk %", title="Predicted Risk Probability",
                       color_continuous_scale="turbo")
-fig_forecast.update_layout(template="plotly_dark",
-                           plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+fig_forecast.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
 st.plotly_chart(fig_forecast, use_container_width=True)
 
 # -------------------- AUTO REFRESH --------------------
-st_autorefresh(interval=60 * 1000, key="auto_refresh")
+st_autorefresh(interval=60*1000, key="auto_refresh")
 
 # -------------------- FOOTER --------------------
 st.markdown("---")
-st.markdown("🧠 *BHOOMI Safety Core v3.1* | Live + CSV + Alerts + Forecast + Heatmap | TEAM BHOOMI ⚡")
-
+st.markdown("🧠 BHOOMI Safety Core v3.1 | Live + CSV + Alerts + Forecast + Heatmap | TEAM BHOOMI ⚡")
