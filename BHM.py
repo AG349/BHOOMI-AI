@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
-# -------------------- PAGE CONFIG --------------------
+
 st.set_page_config(page_title="BHOOMI Rockfall AI", page_icon="🤖", layout="wide")
 
 st.markdown("""
@@ -23,7 +23,7 @@ st.markdown("### AI-Powered Rockfall Prediction & Alert System")
 st.markdown("*System Status:* 🔵 Online | *Mode:* Multimodal Fusion Active")
 st.divider()
 
-# -------------------- DATA SOURCE --------------------
+
 mode = st.radio("📊 Select Data Source:", ["Simulated Live Data", "Preloaded CSV", "Upload CSV"])
 
 if mode == "Preloaded CSV":
@@ -56,7 +56,7 @@ else:
     st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([new_data])], ignore_index=True)
     df = st.session_state.df.tail(50)
 
-# -------------------- METRICS --------------------
+
 col1, col2, col3, col4 = st.columns(4)
 current_risk = df["Risk"].iloc[-1]
 if current_risk > 70:
@@ -73,7 +73,7 @@ with col4: st.metric("Weather", df["Weather"].iloc[-1])
 
 st.divider()
 
-# -------------------- RISK GAUGE --------------------
+
 st.subheader("🧭 Risk Gauge")
 gauge = go.Figure(go.Indicator(
     mode="gauge+number+delta",
@@ -92,7 +92,7 @@ gauge = go.Figure(go.Indicator(
 gauge.update_layout(paper_bgcolor="#0d1117", font={"color":"#00FFEF"})
 st.plotly_chart(gauge, use_container_width=True)
 
-# -------------------- VIBRATION + SLOPE --------------------
+
 col_a, col_b = st.columns(2)
 
 with col_a:
@@ -113,7 +113,7 @@ with col_b:
                             plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
     st.plotly_chart(fig_slope, use_container_width=True)
 
-# -------------------- THERMAL HEATMAP --------------------
+
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
 
 heat_data = np.random.rand(20, 20) * current_risk
@@ -146,19 +146,19 @@ heat_fig.update_layout(
 )
 st.plotly_chart(heat_fig, use_container_width=True)
 
-# -------------------- ALERTS LOG --------------------
+
 st.subheader("🚨 Alerts Log")
 alerts = df.tail(5).copy()
 alerts["Action"] = np.where(alerts["Risk"]>70,"🔴 Evacuation",
                      np.where(alerts["Risk"]>40,"🟡 Warning","🟢 Monitoring"))
 st.dataframe(alerts, use_container_width=True)
 
-# -------------------- MANUAL ALERT --------------------
+
 st.subheader("📢 Trigger Manual Alert")
 if st.button("🚨 SEND ALERT NOW"):
     st.success("✅ Alert sent to all registered numbers! (Simulated in demo mode)")
 
-# -------------------- FORECAST --------------------
+
 st.subheader("🔮 Forecast (Next 6 Hours)")
 hours = [f"{i}h" for i in range(1,7)]
 forecast = np.random.randint(20,95,size=6)
@@ -170,9 +170,9 @@ fig_forecast.update_layout(template="plotly_dark",
                            plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
 st.plotly_chart(fig_forecast, use_container_width=True)
 
-# -------------------- AUTO REFRESH --------------------
+
 st_autorefresh(interval=60 * 1000, key="auto_refresh")
 
-# -------------------- FOOTER --------------------
+
 st.markdown("---")
 st.markdown("🧠 *BHOOMI Safety Core v3.1* | Live + CSV + Alerts + Forecast + Heatmap | TEAM BHOOMI ⚡")
