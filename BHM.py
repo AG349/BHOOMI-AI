@@ -134,29 +134,6 @@ with col_b:
     )
     st.plotly_chart(fig_slope, use_container_width=True)
 
-# -------------------- TEMPERATURE / RISK --------------------
-col_d = st.columns(1)[0]
-with col_d:
-    st.subheader("🌡 Temperature / Risk Level")
-    fig_temp = px.bar(x=[""], y=[df["Temperature"].iloc[-1]], 
-                      labels={"x": "", "y": "Temperature"},
-                      color_discrete_sequence=["#FF7F0E"])
-    fig_temp.update_layout(template="plotly_dark",
-                           plot_bgcolor="#0d1117", paper_bgcolor="#0d1117",
-                           xaxis=dict(showticklabels=False))
-    fig_temp.add_annotation(
-        text="Low", xref="paper", yref="paper",
-        x=0, y=0, showarrow=False,
-        font=dict(color="green", size=14, family="Arial Bold"),
-        xanchor="left", yanchor="bottom"
-    )
-    fig_temp.add_annotation(
-        text="High", xref="paper", yref="paper",
-        x=0, y=1, showarrow=False,
-        font=dict(color="red", size=14, family="Arial Bold"),
-        xanchor="left", yanchor="top"
-    )
-    st.plotly_chart(fig_temp, use_container_width=True)
 
 # -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots & Risk Arrows")
