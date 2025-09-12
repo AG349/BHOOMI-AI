@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -45,13 +45,14 @@ elif mode == "Upload CSV":
 
 else:
     if "df" not in st.session_state:
-        st.session_state.df = pd.DataFrame(columns=["Timestamp","Vibration","Slope","Weather","Risk"])
+        st.session_state.df = pd.DataFrame(columns=["Timestamp","Vibration","Slope","Weather","Risk","Temperature"])
     new_data = {
         "Timestamp": datetime.now().strftime("%H:%M:%S"),
         "Vibration": round(np.random.normal(0.5,0.2),3),
         "Slope": round(np.random.normal(45,3),2),
         "Weather": np.random.choice(["Sunny","Rainy","Cloudy","Windy"]),
-        "Risk": np.random.randint(0,100)
+        "Risk": np.random.randint(0,100),
+        "Temperature": round(np.random.normal(30,5),2)  # NEW
     }
     st.session_state.df = pd.concat([st.session_state.df, pd.DataFrame([new_data])], ignore_index=True)
     df = st.session_state.df.tail(50)
@@ -102,7 +103,6 @@ with col_a:
                             color_discrete_sequence=["orange"])
     fig_vibration.update_layout(template="plotly_dark",
                                 plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-    # Add High (top left, red) and Low (bottom left, green)
     fig_vibration.add_annotation(
         text="High", xref="paper", yref="paper",
         x=0, y=1, showarrow=False,
@@ -122,7 +122,6 @@ with col_b:
                         color_discrete_sequence=["lime"])
     fig_slope.update_layout(template="plotly_dark",
                             plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-    # Add High (top left, red) and Low (bottom left, green)
     fig_slope.add_annotation(
         text="High", xref="paper", yref="paper",
         x=0, y=1, showarrow=False,
@@ -134,6 +133,30 @@ with col_b:
         font=dict(color="green", size=14, family="Arial Bold")
     )
     st.plotly_chart(fig_slope, use_container_width=True)
+
+# -------------------- TEMPERATURE / RISK --------------------
+col_d = st.columns(1)[0]
+with col_d:
+    st.subheader("🌡 Temperature / Risk Level")
+    fig_temp = px.bar(x=[""], y=[df["Temperature"].iloc[-1]], 
+                      labels={"x": "", "y": "Temperature"},
+                      color_discrete_sequence=["#FF7F0E"])
+    fig_temp.update_layout(template="plotly_dark",
+                           plot_bgcolor="#0d1117", paper_bgcolor="#0d1117",
+                           xaxis=dict(showticklabels=False))
+    fig_temp.add_annotation(
+        text="Low", xref="paper", yref="paper",
+        x=0, y=0, showarrow=False,
+        font=dict(color="green", size=14, family="Arial Bold"),
+        xanchor="left", yanchor="bottom"
+    )
+    fig_temp.add_annotation(
+        text="High", xref="paper", yref="paper",
+        x=0, y=1, showarrow=False,
+        font=dict(color="red", size=14, family="Arial Bold"),
+        xanchor="left", yanchor="top"
+    )
+    st.plotly_chart(fig_temp, use_container_width=True)
 
 # -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots & Risk Arrows")
@@ -150,7 +173,6 @@ heat_fig = px.imshow(
     title="Thermal Activity Heatmap"
 )
 
-# Add sensor markers
 sensor_x = np.random.randint(0, 20, 6)
 sensor_y = np.random.randint(0, 20, 6)
 heat_fig.add_trace(go.Scatter(
@@ -162,11 +184,9 @@ heat_fig.add_trace(go.Scatter(
     textposition="top center"
 ))
 
-# Find highest & lowest risk points
 max_idx = np.unravel_index(np.argmax(heat_data), heat_data.shape)
 min_idx = np.unravel_index(np.argmin(heat_data), heat_data.shape)
 
-# Add arrows for HIGH and LOW
 heat_fig.add_annotation(
     x=max_idx[1], y=max_idx[0],
     ax=max_idx[1]-2, ay=max_idx[0]-2,
