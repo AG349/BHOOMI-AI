@@ -92,7 +92,7 @@ gauge = go.Figure(go.Indicator(
 gauge.update_layout(paper_bgcolor="#0d1117", font={"color":"#00FFEF"})
 st.plotly_chart(gauge, use_container_width=True)
 
-# -------------------- VIBRATION + SLOPE --------------------
+# -------------------- VIBRATION + SLOPE WITH HIGH/LOW --------------------
 col_a, col_b = st.columns(2)
 
 with col_a:
@@ -102,6 +102,19 @@ with col_a:
                             color_discrete_sequence=["orange"])
     fig_vibration.update_layout(template="plotly_dark",
                                 plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+    
+    # Add High (top left, red) and Low (bottom left, green)
+    fig_vibration.add_annotation(
+        text="High", xref="paper", yref="paper",
+        x=0, y=1, showarrow=False,
+        font=dict(color="red", size=14, family="Arial Bold")
+    )
+    fig_vibration.add_annotation(
+        text="Low", xref="paper", yref="paper",
+        x=0, y=0, showarrow=False,
+        font=dict(color="green", size=14, family="Arial Bold")
+    )
+    
     st.plotly_chart(fig_vibration, use_container_width=True)
 
 with col_b:
@@ -111,9 +124,22 @@ with col_b:
                         color_discrete_sequence=["lime"])
     fig_slope.update_layout(template="plotly_dark",
                             plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+    
+    # Add High (top left, red) and Low (bottom left, green)
+    fig_slope.add_annotation(
+        text="High", xref="paper", yref="paper",
+        x=0, y=1, showarrow=False,
+        font=dict(color="red", size=14, family="Arial Bold")
+    )
+    fig_slope.add_annotation(
+        text="Low", xref="paper", yref="paper",
+        x=0, y=0, showarrow=False,
+        font=dict(color="green", size=14, family="Arial Bold")
+    )
+    
     st.plotly_chart(fig_slope, use_container_width=True)
 
-# -------------------- THERMAL HEATMAP (MERGED ENHANCEMENTS) --------------------
+# -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
 
 heat_data = np.random.rand(20, 20) * current_risk
