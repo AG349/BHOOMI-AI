@@ -114,7 +114,7 @@ with col_b:
     st.plotly_chart(fig_slope, use_container_width=True)
 
 # -------------------- THERMAL HEATMAP --------------------
-st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
+st.subheader("🌡 Thermal Heatmap with Sensor Hotspots & Risk Arrows")
 
 heat_data = np.random.rand(20, 20) * current_risk
 x, y = np.meshgrid(np.arange(20), np.arange(20))
@@ -128,6 +128,7 @@ heat_fig = px.imshow(
     title="Thermal Activity Heatmap"
 )
 
+# Add sensor markers
 sensor_x = np.random.randint(0, 20, 6)
 sensor_y = np.random.randint(0, 20, 6)
 heat_fig.add_trace(go.Scatter(
@@ -138,6 +139,24 @@ heat_fig.add_trace(go.Scatter(
     text=[f"Sensor {i+1}" for i in range(6)],
     textposition="top center"
 ))
+
+# Find highest & lowest risk points
+max_idx = np.unravel_index(np.argmax(heat_data), heat_data.shape)
+min_idx = np.unravel_index(np.argmin(heat_data), heat_data.shape)
+
+# Add arrows for HIGH and LOW
+heat_fig.add_annotation(
+    x=max_idx[1], y=max_idx[0],
+    ax=max_idx[1]-2, ay=max_idx[0]-2,
+    text="🔥 HIGH RISK",
+    showarrow=True, arrowhead=3, arrowsize=2, arrowcolor="red", font=dict(color="red")
+)
+heat_fig.add_annotation(
+    x=min_idx[1], y=min_idx[0],
+    ax=min_idx[1]+2, ay=min_idx[0]+2,
+    text="❄ LOW RISK",
+    showarrow=True, arrowhead=3, arrowsize=2, arrowcolor="cyan", font=dict(color="cyan")
+)
 
 heat_fig.update_layout(
     template="plotly_dark",
