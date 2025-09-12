@@ -102,6 +102,17 @@ with col_a:
                             color_discrete_sequence=["orange"])
     fig_vibration.update_layout(template="plotly_dark",
                                 plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+    # Add High (top left, red) and Low (bottom left, green)
+    fig_vibration.add_annotation(
+        text="High", xref="paper", yref="paper",
+        x=0, y=1, showarrow=False,
+        font=dict(color="red", size=14, family="Arial Bold")
+    )
+    fig_vibration.add_annotation(
+        text="Low", xref="paper", yref="paper",
+        x=0, y=0, showarrow=False,
+        font=dict(color="green", size=14, family="Arial Bold")
+    )
     st.plotly_chart(fig_vibration, use_container_width=True)
 
 with col_b:
@@ -111,10 +122,21 @@ with col_b:
                         color_discrete_sequence=["lime"])
     fig_slope.update_layout(template="plotly_dark",
                             plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+    # Add High (top left, red) and Low (bottom left, green)
+    fig_slope.add_annotation(
+        text="High", xref="paper", yref="paper",
+        x=0, y=1, showarrow=False,
+        font=dict(color="red", size=14, family="Arial Bold")
+    )
+    fig_slope.add_annotation(
+        text="Low", xref="paper", yref="paper",
+        x=0, y=0, showarrow=False,
+        font=dict(color="green", size=14, family="Arial Bold")
+    )
     st.plotly_chart(fig_slope, use_container_width=True)
 
 # -------------------- THERMAL HEATMAP --------------------
-st.subheader("🌡 Thermal Heatmap with Sensor Hotspots & Risk Indicators")
+st.subheader("🌡 Thermal Heatmap with Sensor Hotspots & Risk Arrows")
 
 heat_data = np.random.rand(20, 20) * current_risk
 x, y = np.meshgrid(np.arange(20), np.arange(20))
@@ -128,7 +150,7 @@ heat_fig = px.imshow(
     title="Thermal Activity Heatmap"
 )
 
-# Sensor markers
+# Add sensor markers
 sensor_x = np.random.randint(0, 20, 6)
 sensor_y = np.random.randint(0, 20, 6)
 heat_fig.add_trace(go.Scatter(
@@ -140,39 +162,29 @@ heat_fig.add_trace(go.Scatter(
     textposition="top center"
 ))
 
-# High & Low values
-max_val = np.max(heat_data)
-min_val = np.min(heat_data)
+# Find highest & lowest risk points
+max_idx = np.unravel_index(np.argmax(heat_data), heat_data.shape)
+min_idx = np.unravel_index(np.argmin(heat_data), heat_data.shape)
 
-# Fix: Correct colorbar layout
+# Add arrows for HIGH and LOW
+heat_fig.add_annotation(
+    x=max_idx[1], y=max_idx[0],
+    ax=max_idx[1]-2, ay=max_idx[0]-2,
+    text="🔥 HIGH RISK",
+    showarrow=True, arrowhead=3, arrowsize=2, arrowcolor="red", font=dict(color="red")
+)
+heat_fig.add_annotation(
+    x=min_idx[1], y=min_idx[0],
+    ax=min_idx[1]+2, ay=min_idx[0]+2,
+    text="❄ LOW RISK",
+    showarrow=True, arrowhead=3, arrowsize=2, arrowcolor="cyan", font=dict(color="cyan")
+)
+
 heat_fig.update_layout(
-    coloraxis_colorbar={
-        "title":"Risk Level",
-        "titleside":"right",
-        "ticks":"outside",
-        "tickvals":[0,25,50,75,100],
-        "ticktext":["Low"," ","Medium"," ","High"],
-        "lenmode":"pixels", "len":300,
-        "thickness":25,
-        "outlinecolor":"white",
-        "outlinewidth":1,
-        "tickfont":{"color":"white"},
-    },
     template="plotly_dark",
     plot_bgcolor="#0d1117",
     paper_bgcolor="#0d1117"
 )
-
-# Add annotations on colorbar
-heat_fig.add_annotation(
-    x=1.05, y=1.0, xref="paper", yref="paper",
-    text="⬆ HIGH", showarrow=False, font=dict(color="red", size=14)
-)
-heat_fig.add_annotation(
-    x=1.05, y=0.0, xref="paper", yref="paper",
-    text="⬇ LOW", showarrow=False, font=dict(color="cyan", size=14)
-)
-
 st.plotly_chart(heat_fig, use_container_width=True)
 
 # -------------------- ALERTS LOG --------------------
