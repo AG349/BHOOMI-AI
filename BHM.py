@@ -156,7 +156,7 @@ heat_fig = go.Figure(data=go.Heatmap(
     colorscale="Viridis",
     zmin=0, zmax=100,
     colorbar=dict(
-        title="Risk Level",
+        title="Temperature/Risk Level",
         tickvals=[0, 50, 100],
         ticktext=["Low", "Medium", "High"]
     )
