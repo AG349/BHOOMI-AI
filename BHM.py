@@ -136,7 +136,7 @@ with col_b:
     st.plotly_chart(fig_slope, use_container_width=True)
 
 # -------------------- THERMAL HEATMAP WITH AXES + SENSORS --------------------
-st.subheader("🌡 Thermal Heatmap with Sensors (X=40, Y=100)")
+st.subheader("🌡 Thermal Heatmap with Sensors (X=100, Y=40)")
 
 # Heatmap data with Y=100 rows, X=40 columns
 heat_data = np.random.normal(loc=current_risk, scale=15, size=(100, 40))
