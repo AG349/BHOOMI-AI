@@ -142,7 +142,14 @@ heat_data = np.random.normal(loc=current_risk, scale=15, size=(20, 20))
 heat_data = np.clip(heat_data, 0, 100)
 
 # Example sensor positions
-
+sensors = {
+    "Sensor1": (3, 15),
+    "Sensor2": (5, 12),
+    "Sensor3": (16, 5),
+    "Sensor4": (18, 14),
+    "Sensor5": (10, 8),
+    "Sensor6": (14, 6),
+}
 
 # Create heatmap
 heat_fig = go.Figure(data=go.Heatmap(
