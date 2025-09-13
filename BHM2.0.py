@@ -136,11 +136,11 @@ with col_b:
 
 # -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
-heat_data = np.random.rand(20, 20) * current_risk
-x, y = np.meshgrid(np.arange(20), np.arange(20))
+heat_data = np.random.rand(80, 20) * current_risk
+x, y = np.meshgrid(np.arange(80), np.arange(20))
 heat_fig = px.imshow(heat_data, color_continuous_scale="plasma", origin="lower", aspect="auto",
-                     labels=dict(color="Temperature / Risk Level"), title="Thermal Activity Heatmap", zmin=0, zmax=100)
-heat_fig.update_coloraxes(colorbar=dict(title="Temperature / Risk Level", tickvals=[0,100], ticktext=["Low","High"]))
+                     labels=dict(color="Temperature / Risk Level"), title="Thermal Activity Heatmap", zmin=0, zmax=80)
+heat_fig.update_coloraxes(colorbar=dict(title="Temperature / Risk Level", tickvals=[0,80], ticktext=["Low","High"]))
 sensor_x = np.random.randint(0, 20, 6)
 sensor_y = np.random.randint(0, 20, 6)
 heat_fig.add_trace(go.Scatter(x=sensor_x, y=sensor_y, mode="markers+text",
