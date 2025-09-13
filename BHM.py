@@ -139,7 +139,7 @@ with col_b:
 st.subheader("🌡 Thermal Heatmap with Sensors (X=100, Y=40)")
 
 # Heatmap data with Y=100 rows, X=40 columns
-heat_data = np.random.normal(loc=current_risk, scale=15, size=(100, 40))
+heat_data = np.random.normal(loc=current_risk, scale=15, size=(40, 100))
 heat_data = np.clip(heat_data, 0, 100)
 
 # Sensor positions (X=0–40, Y=0–100)
