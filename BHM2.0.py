@@ -160,7 +160,7 @@ heat_fig.update_layout(
     paper_bgcolor="#0d1117",
     xaxis=dict(range=[0,80]),
     yaxis=dict(range=[0,20]),
-    margin=dict(r=80),
+    margin=dict(r=20),
     coloraxis_colorbar=dict(
         title="Temperature / Risk Level",
         tickvals=[0, 50, 100],
