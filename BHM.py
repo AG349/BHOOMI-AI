@@ -135,20 +135,21 @@ with col_b:
     fig_slope.add_hrect(y0=slope_high, y1=slope_max, fillcolor="red", opacity=0.2, line_width=0, annotation_text="High", annotation_position="left")
     st.plotly_chart(fig_slope, use_container_width=True)
 
-# -------------------- THERMAL HEATMAP WITH SENSORS --------------------
-st.subheader("🌡 Thermal Heatmap with Sensors")
+# -------------------- THERMAL HEATMAP WITH AXES + SENSORS --------------------
+st.subheader("🌡 Thermal Heatmap with Sensors (X=40, Y=100)")
 
-heat_data = np.random.normal(loc=current_risk, scale=15, size=(20, 20))
+# Heatmap data with Y=100 rows, X=40 columns
+heat_data = np.random.normal(loc=current_risk, scale=15, size=(100, 40))
 heat_data = np.clip(heat_data, 0, 100)
 
-# Sensor positions (x,y inside the heatmap grid)
+# Sensor positions (X=0–40, Y=0–100)
 sensors = {
-    "S1": (3, 15),
-    "S2": (5, 12),
-    "S3": (16, 5),
-    "S4": (18, 14),
-    "S5": (10, 8),
-    "S6": (14, 6),
+    "S1": (5, 90),
+    "S2": (10, 70),
+    "S3": (25, 30),
+    "S4": (35, 85),
+    "S5": (15, 50),
+    "S6": (30, 20),
 }
 
 heat_fig = go.Figure(data=go.Heatmap(
@@ -162,7 +163,7 @@ heat_fig = go.Figure(data=go.Heatmap(
     )
 ))
 
-# Add sensors inside heatmap
+# Add sensors
 for name, (x, y) in sensors.items():
     heat_fig.add_trace(go.Scatter(
         x=[x], y=[y],
@@ -170,16 +171,17 @@ for name, (x, y) in sensors.items():
         marker=dict(size=12, color="white", symbol="x"),
         text=[name],
         textposition="top center",
-        showlegend=False  # ✅ prevents extra labels in the legend
+        showlegend=False
     ))
 
+# ✅ Axes X: 0–40, Y: 0–100
 heat_fig.update_layout(
     title="Thermal Activity Heatmap",
     template="plotly_dark",
     plot_bgcolor="#0d1117",
     paper_bgcolor="#0d1117",
-    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-    yaxis=dict(showgrid=False, zeroline=False, autorange="reversed", showticklabels=False),
+    xaxis=dict(title="X Axis", range=[0, 40], showgrid=False, zeroline=False),
+    yaxis=dict(title="Y Axis", range=[0, 100], showgrid=False, zeroline=False),
     height=600
 )
 
@@ -192,115 +194,9 @@ alerts["Action"] = np.where(alerts["Risk"]>70,"🔴 Evacuation",
                      np.where(alerts["Risk"]>40,"🟡 Warning","🟢 Monitoring"))
 st.dataframe(alerts, use_container_width=True)
 
-# -------------------- RESTRICTED AREA & WORKER GEO --------------------
-st.subheader("🚫 Restricted Area Detection")
-restricted_areas = ["Zone A", "Zone C", "Zone E"]
-worker_zones = np.random.choice(["Zone A","Zone B","Zone C","Zone D","Zone E"], size=5)
-restricted_alerts = [zone for zone in worker_zones if zone in restricted_areas]
-
-if restricted_alerts:
-    st.warning(f"⚠ Restricted Area Alert! Workers detected in: {', '.join(restricted_alerts)}")
-    alerts.loc[len(alerts)] = {
-        "Timestamp": datetime.now().strftime("%H:%M:%S"),
-        "Vibration": np.nan,
-        "Slope": np.nan,
-        "Weather": np.nan,
-        "Risk": 100,
-        "Action": "🚫 Restricted Area Entry"
-    }
-else:
-    st.info("✅ No workers in restricted areas.")
-
-mine_center = {"lat": 20.5937, "lon": 78.9629}
-num_workers = 10
-worker_positions = pd.DataFrame({
-    "Worker": [f"Worker {i+1}" for i in range(num_workers)],
-    "lat": mine_center["lat"] + np.random.uniform(-0.01, 0.01, num_workers),
-    "lon": mine_center["lon"] + np.random.uniform(-0.01, 0.01, num_workers)
-})
-
-restricted_zone = {"lat": mine_center["lat"] + 0.005,
-                   "lon": mine_center["lon"] - 0.005,
-                   "radius_km": 0.7}
-
-fig_workers = px.scatter_mapbox(
-    worker_positions, lat="lat", lon="lon", text="Worker",
-    zoom=14, height=600, color_discrete_sequence=["cyan"]
-)
-
-fig_workers.update_traces(textfont=dict(color="black"))
-fig_workers.add_trace(go.Scattermapbox(
-    lat=[restricted_zone["lat"]],
-    lon=[restricted_zone["lon"]],
-    mode="markers+text",
-    marker=dict(size=18, color="red"),
-    text=["🚫 Restricted Zone"],
-    textposition="top right",
-    textfont=dict(color="black")
-))
-fig_workers.update_layout(mapbox_style="open-street-map", margin={"r":0,"t":0,"l":0,"b":0}, paper_bgcolor="#0d1117", font=dict(color="white"))
-st.plotly_chart(fig_workers, use_container_width=True)
-
-if st.button("📢 Alert Workers Near Restricted Area"):
-    if restricted_alerts:
-        st.success(f"✅ Alert sent to workers in restricted zones: {', '.join(restricted_alerts)}")
-    else:
-        st.info("ℹ No workers currently near restricted areas to alert.")
-
-# -------------------- WORKER MOVEMENT DIRECTION --------------------
-st.subheader("🧭 Worker Danger Movement Prediction")
-
-worker_positions_prev = pd.DataFrame({
-    "Worker": worker_positions["Worker"],
-    "lat": worker_positions["lat"] + np.random.uniform(-0.002, 0.002, num_workers),
-    "lon": worker_positions["lon"] + np.random.uniform(-0.002, 0.002, num_workers)
-})
-
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371
-    dlat = np.radians(lat2 - lat1)
-    dlon = np.radians(lat2 - lon1)
-    a = np.sin(dlat/2)*2 + np.cos(np.radians(lat1))*np.cos(np.radians(lat2))*np.sin(dlon/2)*2
-    return 2*R*np.arcsin(np.sqrt(a))
-
-danger_workers = []
-for i, row in worker_positions.iterrows():
-    worker = row["Worker"]
-    lat_now, lon_now = row["lat"], row["lon"]
-    lat_prev, lon_prev = worker_positions_prev.loc[i, "lat"], worker_positions_prev.loc[i, "lon"]
-
-    dist_prev = haversine(lat_prev, lon_prev, restricted_zone["lat"], restricted_zone["lon"])
-    dist_now = haversine(lat_now, lon_now, restricted_zone["lat"], restricted_zone["lon"])
-
-    if dist_now < dist_prev:
-        danger_workers.append(worker)
-
-if danger_workers:
-    st.error(f"🚨 Danger Prediction: {', '.join(danger_workers)} are moving TOWARD the restricted zone!")
-    if st.button("📢 TRIGGER ALERT (Danger Zone)", key="danger_alert"):
-        st.success(f"✅ Alert sent to workers: {', '.join(danger_workers)} (Simulated in demo mode)")
-else:
-    st.success("✅ No workers are moving toward danger areas.")
-
-# -------------------- MANUAL ALERT --------------------
-st.subheader("📢 Trigger Manual Alert")
-if st.button("🚨 SEND ALERT NOW"):
-    st.success("✅ Alert sent to all registered numbers! (Simulated in demo mode)")
-
-# -------------------- FORECAST --------------------
-st.subheader("🔮 Forecast (Next 6 Hours)")
-hours = [f"{i}h" for i in range(1,7)]
-forecast = np.random.randint(20,95,size=6)
-df_forecast = pd.DataFrame({"Hour":hours,"Forecast Risk %":forecast})
-fig_forecast = px.bar(df_forecast, x="Hour", y="Forecast Risk %",
-                      color="Forecast Risk %", title="Predicted Risk Probability",
-                      color_continuous_scale="turbo")
-fig_forecast.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-st.plotly_chart(fig_forecast, use_container_width=True)
-
 # -------------------- AUTO REFRESH --------------------
 st_autorefresh(interval=60*1000, key="auto_refresh")
 
 # -------------------- FOOTER --------------------
 st.markdown("---")
-st.markdown("🧠 BHOOMI Safety Core v3.1 | Live + CSV + Alerts + Forecast + Heatmap + GeoMap | TEAM BHOOMI ⚡")
+st.markdown("🧠 BHOOMI Safety Core v3.2 | Live + CSV + Alerts + Forecast + Heatmap (X/Y Axis) | TEAM BHOOMI ⚡")
