@@ -73,8 +73,13 @@ with col4: st.metric("Weather", df["Weather"].iloc[-1])
 
 st.divider()
 
-# -------------------- RISK GAUGE --------------------
+# -------------------- DYNAMIC RISK GAUGE --------------------
 st.subheader("🧭 Risk Gauge")
+risk_min, risk_max = df["Risk"].min(), df["Risk"].max()
+risk_range = risk_max - risk_min
+risk_low = risk_min + 0.3 * risk_range
+risk_high = risk_min + 0.7 * risk_range
+
 gauge = go.Figure(go.Indicator(
     mode="gauge+number+delta",
     value=current_risk,
@@ -83,17 +88,23 @@ gauge = go.Figure(go.Indicator(
         "axis":{"range":[0,100]},
         "bar":{"color":"cyan"},
         "steps":[
-            {"range":[0,40],"color":"green"},
-            {"range":[40,70],"color":"yellow"},
-            {"range":[70,100],"color":"red"}
+            {"range":[0,risk_low],"color":"green"},
+            {"range":[risk_low,risk_high],"color":"yellow"},
+            {"range":[risk_high,100],"color":"red"}
         ]
     }
 ))
 gauge.update_layout(paper_bgcolor="#0d1117", font={"color":"#00FFEF"})
 st.plotly_chart(gauge, use_container_width=True)
 
-# -------------------- VIBRATION + SLOPE WITH HIGH/LOW --------------------
+# -------------------- VIBRATION + SLOPE (Dynamic Zones) --------------------
 col_a, col_b = st.columns(2)
+
+# --- Vibration ---
+vib_min, vib_max = df["Vibration"].min(), df["Vibration"].max()
+vib_range = vib_max - vib_min
+vib_low = vib_min + 0.3 * vib_range
+vib_high = vib_min + 0.7 * vib_range
 
 with col_a:
     st.subheader("📈 Vibration Trend")
@@ -102,11 +113,15 @@ with col_a:
                             color_discrete_sequence=["orange"])
     fig_vibration.update_layout(template="plotly_dark",
                                 plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-    fig_vibration.add_annotation(text="High", xref="paper", yref="paper", x=0, y=1,
-                                 showarrow=False, font=dict(color="red", size=14, family="Arial Bold"))
-    fig_vibration.add_annotation(text="Low", xref="paper", yref="paper", x=0, y=0,
-                                 showarrow=False, font=dict(color="green", size=14, family="Arial Bold"))
+    fig_vibration.add_hrect(y0=vib_min, y1=vib_low, fillcolor="green", opacity=0.2, line_width=0, annotation_text="Low", annotation_position="left")
+    fig_vibration.add_hrect(y0=vib_high, y1=vib_max, fillcolor="red", opacity=0.2, line_width=0, annotation_text="High", annotation_position="left")
     st.plotly_chart(fig_vibration, use_container_width=True)
+
+# --- Slope ---
+slope_min, slope_max = df["Slope"].min(), df["Slope"].max()
+slope_range = slope_max - slope_min
+slope_low = slope_min + 0.3 * slope_range
+slope_high = slope_min + 0.7 * slope_range
 
 with col_b:
     st.subheader("⛰ Slope Angle Trend")
@@ -115,25 +130,54 @@ with col_b:
                         color_discrete_sequence=["lime"])
     fig_slope.update_layout(template="plotly_dark",
                             plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
-    fig_slope.add_annotation(text="High", xref="paper", yref="paper", x=0, y=1,
-                             showarrow=False, font=dict(color="red", size=14, family="Arial Bold"))
-    fig_slope.add_annotation(text="Low", xref="paper", yref="paper", x=0, y=0,
-                             showarrow=False, font=dict(color="green", size=14, family="Arial Bold"))
+    fig_slope.add_hrect(y0=slope_min, y1=slope_low, fillcolor="green", opacity=0.2, line_width=0, annotation_text="Low", annotation_position="left")
+    fig_slope.add_hrect(y0=slope_high, y1=slope_max, fillcolor="red", opacity=0.2, line_width=0, annotation_text="High", annotation_position="left")
     st.plotly_chart(fig_slope, use_container_width=True)
 
 # -------------------- THERMAL HEATMAP --------------------
 st.subheader("🌡 Thermal Heatmap with Sensor Hotspots")
-heat_data = np.random.rand(20, 20) * current_risk
-x, y = np.meshgrid(np.arange(20), np.arange(20))
-heat_fig = px.imshow(heat_data, color_continuous_scale="plasma", origin="lower", aspect="auto",
-                     labels=dict(color="Temperature / Risk Level"), title="Thermal Activity Heatmap", zmin=0, zmax=100)
-heat_fig.update_coloraxes(colorbar=dict(title="Temperature / Risk Level", tickvals=[0,100], ticktext=["Low","High"]))
-sensor_x = np.random.randint(0, 20, 6)
-sensor_y = np.random.randint(0, 20, 6)
-heat_fig.add_trace(go.Scatter(x=sensor_x, y=sensor_y, mode="markers+text",
-                              marker=dict(size=12, color="white", symbol="x"),
-                              text=[f"Sensor {i+1}" for i in range(6)], textposition="top center"))
-heat_fig.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117")
+heat_data = np.random.normal(loc=current_risk, scale=15, size=(100, 100))  # resized to 0–100
+heat_data = np.clip(heat_data, 0, 100)
+
+heat_fig = px.imshow(
+    heat_data,
+    color_continuous_scale="plasma",
+    origin="lower",
+    aspect="auto",
+    labels=dict(color="Temperature / Risk Level"),
+    title="Thermal Activity Heatmap",
+    zmin=0, zmax=100
+)
+
+sensor_x = np.random.randint(0, 100, 6)
+sensor_y = np.random.randint(0, 100, 6)
+heat_fig.add_trace(go.Scatter(
+    x=sensor_x, y=sensor_y,
+    mode="markers+text",
+    marker=dict(size=12, color="white", symbol="x"),
+    text=[f"Sensor {i+1}" for i in range(6)],
+    textposition="top center"
+))
+
+low_threshold = np.percentile(heat_data, 30)
+high_threshold = np.percentile(heat_data, 70)
+
+heat_fig.add_annotation(x=102, y=low_threshold, text="Low Risk", showarrow=False, font=dict(color="green", size=12))
+heat_fig.add_annotation(x=102, y=high_threshold, text="High Risk", showarrow=False, font=dict(color="red", size=12))
+
+heat_fig.update_layout(
+    template="plotly_dark",
+    plot_bgcolor="#0d1117",
+    paper_bgcolor="#0d1117",
+    xaxis=dict(range=[0,100]),
+    yaxis=dict(range=[0,100]),
+    margin=dict(r=80),
+    coloraxis_colorbar=dict(
+        title="Temperature / Risk Level",
+        tickvals=[0, 50, 100],
+        ticktext=["Low", "Medium", "High"]
+    )
+)
 st.plotly_chart(heat_fig, use_container_width=True)
 
 # -------------------- ALERTS LOG --------------------
@@ -143,7 +187,7 @@ alerts["Action"] = np.where(alerts["Risk"]>70,"🔴 Evacuation",
                      np.where(alerts["Risk"]>40,"🟡 Warning","🟢 Monitoring"))
 st.dataframe(alerts, use_container_width=True)
 
-# -------------------- RESTRICTED AREA ALERT --------------------
+# -------------------- RESTRICTED AREA & WORKER GEO --------------------
 st.subheader("🚫 Restricted Area Detection")
 restricted_areas = ["Zone A", "Zone C", "Zone E"]
 worker_zones = np.random.choice(["Zone A","Zone B","Zone C","Zone D","Zone E"], size=5)
@@ -162,46 +206,78 @@ if restricted_alerts:
 else:
     st.info("✅ No workers in restricted areas.")
 
-# -------------------- WORKER LOCATION TRACKING --------------------
-st.subheader("📍 Worker Location Tracking")
-mine_size = 20
-num_workers = 5
+mine_center = {"lat": 20.5937, "lon": 78.9629}
+num_workers = 10
 worker_positions = pd.DataFrame({
     "Worker": [f"Worker {i+1}" for i in range(num_workers)],
-    "X": np.random.randint(0, mine_size, num_workers),
-    "Y": np.random.randint(0, mine_size, num_workers)
+    "lat": mine_center["lat"] + np.random.uniform(-0.01, 0.01, num_workers),
+    "lon": mine_center["lon"] + np.random.uniform(-0.01, 0.01, num_workers)
 })
-restricted_coords = [(2,2),(5,5),(15,15)]
 
-fig_workers = px.scatter(worker_positions, x="X", y="Y", text="Worker",
-                         color_discrete_sequence=["cyan"], title="Worker Locations in Mine")
-for coord in restricted_coords:
-    fig_workers.add_shape(type="rect", x0=coord[0]-0.5, y0=coord[1]-0.5, x1=coord[0]+0.5, y1=coord[1]+0.5,
-                          line=dict(color="red", width=2), fillcolor="rgba(255,0,0,0.2)")
-for i, row in worker_positions.iterrows():
-    if (row["X"], row["Y"]) in restricted_coords:
-        fig_workers.add_annotation(x=row["X"], y=row["Y"], text="🚫 Restricted",
-                                   showarrow=True, arrowhead=3, arrowcolor="red",
-                                   font=dict(color="red", size=12))
-fig_workers.update_layout(template="plotly_dark", plot_bgcolor="#0d1117", paper_bgcolor="#0d1117",
-                          xaxis=dict(range=[0,mine_size]), yaxis=dict(range=[0,mine_size]), height=500)
+restricted_zone = {"lat": mine_center["lat"] + 0.005,
+                   "lon": mine_center["lon"] - 0.005,
+                   "radius_km": 0.7}
+
+fig_workers = px.scatter_mapbox(
+    worker_positions, lat="lat", lon="lon", text="Worker",
+    zoom=14, height=600, color_discrete_sequence=["cyan"]
+)
+
+fig_workers.update_traces(textfont=dict(color="black"))
+fig_workers.add_trace(go.Scattermapbox(
+    lat=[restricted_zone["lat"]],
+    lon=[restricted_zone["lon"]],
+    mode="markers+text",
+    marker=dict(size=18, color="red"),
+    text=["🚫 Restricted Zone"],
+    textposition="top right",
+    textfont=dict(color="black")
+))
+fig_workers.update_layout(mapbox_style="open-street-map", margin={"r":0,"t":0,"l":0,"b":0}, paper_bgcolor="#0d1117", font=dict(color="white"))
 st.plotly_chart(fig_workers, use_container_width=True)
 
-# -------------------- REAL-TIME WORKER RESTRICTED AREA ALERT --------------------
-st.subheader("⚠ Worker Restricted Area Notification")
-for i, row in worker_positions.iterrows():
-    if (row["X"], row["Y"]) in restricted_coords:
-        st.error(f"🚨 {row['Worker']} is in a RESTRICTED AREA! Move to a safe zone immediately.")
-        alerts.loc[len(alerts)] = {
-            "Timestamp": datetime.now().strftime("%H:%M:%S"),
-            "Vibration": np.nan,
-            "Slope": np.nan,
-            "Weather": np.nan,
-            "Risk": 100,
-            "Action": f"🚫 {row['Worker']} entered Restricted Area"
-        }
+if st.button("📢 Alert Workers Near Restricted Area"):
+    if restricted_alerts:
+        st.success(f"✅ Alert sent to workers in restricted zones: {', '.join(restricted_alerts)}")
     else:
-        st.success(f"✅ {row['Worker']} is in a safe zone.")
+        st.info("ℹ No workers currently near restricted areas to alert.")
+
+# -------------------- WORKER MOVEMENT DIRECTION (Danger Prediction) --------------------
+st.subheader("🧭 Worker Danger Movement Prediction")
+
+# Simulate previous positions (for demo, random offset)
+worker_positions_prev = pd.DataFrame({
+    "Worker": worker_positions["Worker"],
+    "lat": worker_positions["lat"] + np.random.uniform(-0.002, 0.002, num_workers),
+    "lon": worker_positions["lon"] + np.random.uniform(-0.002, 0.002, num_workers)
+})
+
+# Function to calculate distance from restricted zone center
+def haversine(lat1, lon1, lat2, lon2):
+    R = 6371  # Earth radius km
+    dlat = np.radians(lat2 - lat1)
+    dlon = np.radians(lon2 - lon1)
+    a = np.sin(dlat/2)*2 + np.cos(np.radians(lat1))*np.cos(np.radians(lat2))*np.sin(dlon/2)*2
+    return 2*R*np.arcsin(np.sqrt(a))
+
+# Check movement toward danger zone
+danger_workers = []
+for i, row in worker_positions.iterrows():
+    worker = row["Worker"]
+    lat_now, lon_now = row["lat"], row["lon"]
+    lat_prev, lon_prev = worker_positions_prev.loc[i, "lat"], worker_positions_prev.loc[i, "lon"]
+
+    dist_prev = haversine(lat_prev, lon_prev, restricted_zone["lat"], restricted_zone["lon"])
+    dist_now = haversine(lat_now, lon_now, restricted_zone["lat"], restricted_zone["lon"])
+
+    if dist_now < dist_prev:  # Worker moved closer
+        danger_workers.append(worker)
+
+# Display results
+if danger_workers:
+    st.error(f"🚨 Danger Prediction: {', '.join(danger_workers)} are moving TOWARD the restricted zone!")
+else:
+    st.success("✅ No workers are moving toward danger areas.")
 
 # -------------------- MANUAL ALERT --------------------
 st.subheader("📢 Trigger Manual Alert")
@@ -224,4 +300,4 @@ st_autorefresh(interval=60*1000, key="auto_refresh")
 
 # -------------------- FOOTER --------------------
 st.markdown("---")
-st.markdown("🧠 BHOOMI Safety Core v3.1 | Live + CSV + Alerts + Forecast + Heatmap | TEAM BHOOMI ⚡")
+st.markdown("🧠 BHOOMI Safety Core v3.1 | Live + CSV + Alerts + Forecast + Heatmap + GeoMap | TEAM BHOOMI ⚡")
