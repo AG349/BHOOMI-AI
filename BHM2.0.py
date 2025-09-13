@@ -145,7 +145,7 @@ heat_fig = px.imshow(
     color_continuous_scale="plasma",
     origin="lower",
     aspect="auto",
-    labels=dict(color="
+    labels=dict(color="Temperature / Risk Level"),
 
 low_threshold = np.percentile(heat_data, 30)
 high_threshold = np.percentile(heat_data, 70)
