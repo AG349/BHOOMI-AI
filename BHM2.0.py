@@ -273,9 +273,13 @@ for i, row in worker_positions.iterrows():
     if dist_now < dist_prev:  # Worker moved closer
         danger_workers.append(worker)
 
-# Display results
+# Display results + NEW ALERT BUTTON
 if danger_workers:
     st.error(f"🚨 Danger Prediction: {', '.join(danger_workers)} are moving TOWARD the restricted zone!")
+    
+    # New Trigger Alert Button (same style as manual alert)
+    if st.button("📢 TRIGGER ALERT (Danger Zone)", key="danger_alert"):
+        st.success(f"✅ Alert sent to workers: {', '.join(danger_workers)} (Simulated in demo mode)")
 else:
     st.success("✅ No workers are moving toward danger areas.")
 
